@@ -1,4 +1,4 @@
-rootProject.name = "rabbitmq-amqp-demo"
+rootProject.name = "poc-rabbit-amqp"
 
 include("common-dto")
 include("order-service")
