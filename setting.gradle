@@ -1,0 +1,5 @@
+rootProject.name = "rabbitmq-amqp-demo"
+
+include("common-dto")
+include("order-service")
+include("billing-service")
