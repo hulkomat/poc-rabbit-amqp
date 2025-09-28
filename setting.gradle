@@ -1,5 +1,0 @@
-rootProject.name = "poc-rabbit-amqp"
-
-include("common-dto")
-include("order-service")
-include("billing-service")
