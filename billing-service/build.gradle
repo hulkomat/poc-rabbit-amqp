@@ -1,0 +1,12 @@
+plugins {
+    id 'org.springframework.boot' version '3.3.3'
+    id 'io.spring.dependency-management'
+    id 'java'
+}
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-amqp'
+    implementation 'org.springframework.boot:spring-boot-starter-json'
+    implementation project(':common-dto')
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+}
