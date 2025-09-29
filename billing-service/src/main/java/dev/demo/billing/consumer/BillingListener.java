@@ -15,19 +15,15 @@ public class BillingListener {
 
   @RabbitListener(queues = AmqpConfig.QUEUE_ORDER_CREATED)
   public void onOrderCreated(OrderCreated evt) {
-    // Beispiel: "harte" Business-Validierung -> sofort DLQ
     if (evt.amount() < 0) {
       throw new AmqpRejectAndDontRequeueException("Negative amount is not allowed");
     }
-    // Beispiel: Domainfehler, den wir als nicht-retriable klassifizieren
     if ("c-bad".equals(evt.customerId())) {
       throw new AmqpConfig.NonRetriableBusinessException("Blacklisted customer");
     }
-    // Beispiel: transienter Fehler -> wird retried, nach 3 Versuchen DLQ
     if ((counter++ % 3) != 2) {
       throw new IllegalStateException("Transient billing failure, try again");
     }
-
     log.info("✅ Billing processed orderId={} amount={}", evt.orderId(), evt.amount());
   }
 }

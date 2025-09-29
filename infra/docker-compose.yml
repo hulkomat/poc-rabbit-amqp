@@ -9,3 +9,8 @@ services:
     environment:
       RABBITMQ_DEFAULT_USER: demo
       RABBITMQ_DEFAULT_PASS: demo
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10

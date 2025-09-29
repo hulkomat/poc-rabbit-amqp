@@ -1,9 +1,5 @@
-rootProject.name = "poc-rabbit-amqp"
+rootProject.name = "rabbitmq-amqp-demo"
 
 include("common-dto")
 include("order-service")
 include("billing-service")
-
-// project(":order-service").projectDir   = file("order-service")
-// project(":billing-service").projectDir = file("billing-service")
-// project(":common-dto").projectDir      = file("common-dto")

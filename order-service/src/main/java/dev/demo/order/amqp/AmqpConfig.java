@@ -2,7 +2,6 @@ package dev.demo.order.amqp;
 
 import org.springframework.amqp.core.TopicExchange;
 import org.springframework.amqp.rabbit.connection.CachingConnectionFactory;
-import org.springframework.amqp.rabbit.connection.CorrelationData;
 import org.springframework.amqp.rabbit.connection.CachingConnectionFactory.ConfirmType;
 import org.springframework.amqp.rabbit.core.RabbitAdmin;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -15,13 +14,13 @@ public class AmqpConfig {
 
   public static final String EXCHANGE_ORDERS = "ex.orders";
   public static final String RK_ORDER_CREATED = "order.created";
+  public static final String RK_BILLING_CHECK = "billing.check";
 
   @Bean
   public CachingConnectionFactory connectionFactory() {
     var cf = new CachingConnectionFactory("localhost", 5672);
     cf.setUsername("demo");
     cf.setPassword("demo");
-    // Für spätere Lektionen (Publisher Confirms):
     cf.setPublisherConfirmType(ConfirmType.CORRELATED);
     cf.setPublisherReturns(true);
     return cf;
@@ -36,19 +35,31 @@ public class AmqpConfig {
   public RabbitTemplate rabbitTemplate(CachingConnectionFactory cf) {
     var tpl = new RabbitTemplate(cf);
     tpl.setMessageConverter(messageConverter());
-    tpl.setMandatory(true); // ReturnCallback bei unroutable Messages
+    tpl.setMandatory(true);
     return tpl;
   }
 
-  // Producer deklariert typischerweise Exchanges (nicht zwingend Queues)
   @Bean
   public TopicExchange ordersExchange() {
     return new TopicExchange(EXCHANGE_ORDERS, true, false);
   }
 
-  // Führt Deklarationen aus (Exchange); ungefährlich, wenn schon vorhanden.
   @Bean
   public RabbitAdmin amqpAdmin(CachingConnectionFactory cf) {
     return new RabbitAdmin(cf);
+  }
+
+  // RPC (Direct-Reply-To) support
+  @Bean
+  public org.springframework.amqp.rabbit.listener.DirectReplyToMessageListenerContainer directReplyToContainer(CachingConnectionFactory cf) {
+    var c = new org.springframework.amqp.rabbit.listener.DirectReplyToMessageListenerContainer(cf);
+    c.setMessageConverter(messageConverter());
+    return c;
+  }
+
+  @Bean
+  public org.springframework.amqp.rabbit.AsyncRabbitTemplate asyncRabbitTemplate(RabbitTemplate tpl,
+      org.springframework.amqp.rabbit.listener.DirectReplyToMessageListenerContainer drt) {
+    return new org.springframework.amqp.rabbit.AsyncRabbitTemplate(tpl, drt);
   }
 }

@@ -7,7 +7,7 @@ plugins {
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-amqp'
     implementation 'org.springframework.boot:spring-boot-starter-json'
-    implementation 'org.springframework.retry:spring-retry'            // <— für Retry-Policies
+    implementation 'org.springframework.retry:spring-retry'
     implementation project(':common-dto')
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
 }

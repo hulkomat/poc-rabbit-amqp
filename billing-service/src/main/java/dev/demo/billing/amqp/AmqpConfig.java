@@ -5,6 +5,7 @@ import org.springframework.amqp.core.*;
 import org.springframework.amqp.rabbit.config.RetryInterceptorBuilder;
 import org.springframework.amqp.rabbit.config.SimpleRabbitListenerContainerFactory;
 import org.springframework.amqp.rabbit.connection.CachingConnectionFactory;
+import org.springframework.amqp.rabbit.core.RabbitAdmin;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -20,10 +21,14 @@ public class AmqpConfig {
   public static final String RK_ORDER_CREATED = "order.created";
   public static final String QUEUE_ORDER_CREATED = "q.order.created";
 
-  // DLX/DLQ-Namen
+  // DLX/DLQ names
   public static final String DLX_NAME = "ex.dlx";
   public static final String DLQ_NAME = "q.order.created.dlq";
   public static final String DLQ_RK   = "order.created.dlq";
+
+  // RPC (billing.check)
+  public static final String RK_BILLING_CHECK   = "billing.check";
+  public static final String QUEUE_BILLING_RPC  = "q.billing.rpc";
 
   @Bean
   public CachingConnectionFactory connectionFactory() {
@@ -33,14 +38,11 @@ public class AmqpConfig {
     return cf;
   }
 
-  // Producer-Exchange spiegeln (deklarieren ist idempotent)
   @Bean TopicExchange ordersExchange() { return new TopicExchange(EXCHANGE_ORDERS, true, false); }
 
   // DLX + DLQ
   @Bean DirectExchange dlx() { return new DirectExchange(DLX_NAME, true, false); }
-
   @Bean Queue orderCreatedDlq() { return QueueBuilder.durable(DLQ_NAME).build(); }
-
   @Bean Binding bindDlq() { return BindingBuilder.bind(orderCreatedDlq()).to(dlx()).with(DLQ_RK); }
 
   // Hauptqueue mit DLX-Verknüpfung
@@ -52,35 +54,41 @@ public class AmqpConfig {
         .build();
   }
 
-  // Queue an Exchange binden
+  // Binding für Events
   @Bean
   public Binding bindOrderCreated(Queue orderCreatedQueue, TopicExchange ordersExchange) {
     return BindingBuilder.bind(orderCreatedQueue).to(ordersExchange).with(RK_ORDER_CREATED);
   }
 
-  @Bean Jackson2JsonMessageConverter converter() { return new Jackson2JsonMessageConverter(); }
+  // RPC Queue + Binding
+  @Bean
+  public Queue billingRpcQueue() { return QueueBuilder.durable(QUEUE_BILLING_RPC).build(); }
 
-  // Retry-Template: definiert, welche Exceptions retriable sind
+  @Bean
+  public Binding bindBillingRpc(Queue billingRpcQueue, TopicExchange ordersExchange) {
+    return BindingBuilder.bind(billingRpcQueue).to(ordersExchange).with(RK_BILLING_CHECK);
+  }
+
+  @Bean
+  public Jackson2JsonMessageConverter converter() { return new Jackson2JsonMessageConverter(); }
+
   @Bean
   RetryTemplate retryTemplate() {
-    // Map: Exception-Klasse -> retryable?
     var retryables = Map.<Class<? extends Throwable>, Boolean>of(
-        AmqpRejectAndDontRequeueException.class, false, // nie retrien (geht sofort DLQ)
-        NonRetriableBusinessException.class, false      // unsere eigene "hart" Exception
+        AmqpRejectAndDontRequeueException.class, false,
+        NonRetriableBusinessException.class, false
     );
-    var policy = new SimpleRetryPolicy(3, retryables, true); // max 3 Versuche; alle anderen true
+    var policy = new SimpleRetryPolicy(3, retryables, true);
     var template = new RetryTemplate();
+    var backoff = new org.springframework.retry.backoff.ExponentialBackOffPolicy();
+    backoff.setInitialInterval(500);
+    backoff.setMultiplier(2.0);
+    backoff.setMaxInterval(5000);
     template.setRetryPolicy(policy);
-    // Backoff: 500ms -> 1000ms -> 2000ms (einfaches, schnelles Beispiel)
-    template.setBackOffPolicy(new org.springframework.retry.backoff.ExponentialBackOffPolicy() {{
-      setInitialInterval(500);
-      setMultiplier(2.0);
-      setMaxInterval(5000);
-    }});
+    template.setBackOffPolicy(backoff);
     return template;
   }
 
-  // Listener-Container mit Retry-Interceptor + DLQ-Recoverer
   @Bean
   public SimpleRabbitListenerContainerFactory rabbitListenerContainerFactory(
       CachingConnectionFactory cf,
@@ -89,23 +97,21 @@ public class AmqpConfig {
     var f = new SimpleRabbitListenerContainerFactory();
     f.setConnectionFactory(cf);
     f.setMessageConverter(converter());
-    f.setDefaultRequeueRejected(false); // wichtig: nack ohne Requeue -> DLX greift
-
+    f.setDefaultRequeueRejected(false);
+    f.setPrefetchCount(20);
     var interceptor = RetryInterceptorBuilder
         .stateless()
         .retryOperations(retryTemplate)
-        .recoverer((msg, cause) -> {
-          // Wenn Retries ausgereizt: Broker routet wegen requeue=false zur DLQ (über DLX).
-          // Hier könnten wir zusätzlich loggen/telemetrieren.
-          System.err.println("Retries exhausted; message will go to DLQ. cause=" + cause);
-        })
+        .recoverer((msg, cause) -> System.err.println("Retries exhausted; to DLQ. cause=" + cause))
         .build();
-
     f.setAdviceChain(interceptor);
     return f;
   }
 
-  // Eigene "nicht retriable" Exception
+  @Bean
+  public AmqpAdmin amqpAdmin(CachingConnectionFactory cf) { return new RabbitAdmin(cf); }
+
+  // Custom non-retriable exception
   public static class NonRetriableBusinessException extends RuntimeException {
     public NonRetriableBusinessException(String msg) { super(msg); }
   }

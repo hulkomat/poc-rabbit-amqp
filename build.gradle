@@ -27,3 +27,9 @@ subprojects {
 ext {
     springBootVersion = '3.3.3'
 }
+
+dependencyManagement {
+    imports {
+        mavenBom "org.springframework.boot:spring-boot-dependencies:${springBootVersion}"
+    }
+}
