@@ -1,0 +1,72 @@
+Starting a Gradle Daemon, 1 busy and 1 incompatible and 1 stopped Daemons could not be reused, use --status for details
+Calculating task graph as configuration cache cannot be reused because file 'billing-service/build.gradle' has changed.
+> Task :common-dto:processResources NO-SOURCE
+> Task :common-dto:compileJava UP-TO-DATE
+> Task :common-dto:classes UP-TO-DATE
+> Task :common-dto:jar UP-TO-DATE
+> Task :order-service:processResources FAILED
+
+> Task :order-service:compileJava FAILED
+/Users/severinselmaier/Documents/GitHub/hulkomat/poc-rabbit-amqp/order-service/src/main/java/dev/demo/order/messaging/OrderPublisher.java:26: Fehler: Symbol nicht gefunden
+        returned.getReplyText(), returned.getExchange(), returned.getRoutingKey(), returned.getCorrelationId()));
+                                                                                           ^
+  Symbol: Methode getCorrelationId()
+  Ort: Variable returned von Typ ReturnedMessage
+/Users/severinselmaier/Documents/GitHub/hulkomat/poc-rabbit-amqp/order-service/src/main/java/dev/demo/order/rpc/BillingRpcClient.java:40: Fehler: Symbol nicht gefunden
+            log.info("Billing RPC response orderId={} success={} reason={}", res.orderId(), res.success(), res.reason());
+                                                                                               ^
+  Symbol: Methode success()
+  Ort: Variable res von Typ PaymentResult
+2 Fehler
+
+1 problem was found storing the configuration cache.
+- Task `:order-service:processResources` of type `org.gradle.language.jvm.tasks.ProcessResources`: invocation of 'project' references a Gradle script object from a Groovy closure at execution time, which is unsupported with the configuration cache.
+  See https://docs.gradle.org/9.1.0/userguide/configuration_cache_requirements.html#config_cache:requirements:gradle_model_types
+
+See the complete report at file:///Users/severinselmaier/Documents/GitHub/hulkomat/poc-rabbit-amqp/build/reports/configuration-cache/7767ylz17y534dauoox5td46m/dcosib80xdt5bl51uzq0y6uq9/configuration-cache-report.html
+
+[Incubating] Problems report is available at: file:///Users/severinselmaier/Documents/GitHub/hulkomat/poc-rabbit-amqp/build/reports/problems/problems-report.html
+
+FAILURE: Build completed with 2 failures.
+
+1: Task failed with an exception.
+-----------
+* Where:
+Build file '/Users/severinselmaier/Documents/GitHub/hulkomat/poc-rabbit-amqp/order-service/build.gradle' line: 16
+
+* What went wrong:
+Execution failed for task ':order-service:processResources'.
+> Invocation of 'project' references a Gradle script object from a Groovy closure at execution time, which is unsupported with the configuration cache.
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to generate a Build Scan (Powered by Develocity).
+> Get more help at https://help.gradle.org.
+==============================================================================
+
+2: Task failed with an exception.
+-----------
+* What went wrong:
+Execution failed for task ':order-service:compileJava'.
+> Compilation failed; see the compiler output below.
+  /Users/severinselmaier/Documents/GitHub/hulkomat/poc-rabbit-amqp/order-service/src/main/java/dev/demo/order/messaging/OrderPublisher.java:26: Fehler: Symbol nicht gefunden
+          returned.getReplyText(), returned.getExchange(), returned.getRoutingKey(), returned.getCorrelationId()));
+                                                                                             ^
+    Symbol: Methode getCorrelationId()
+    Ort: Variable returned von Typ ReturnedMessage
+  /Users/severinselmaier/Documents/GitHub/hulkomat/poc-rabbit-amqp/order-service/src/main/java/dev/demo/order/rpc/BillingRpcClient.java:40: Fehler: Symbol nicht gefunden
+              log.info("Billing RPC response orderId={} success={} reason={}", res.orderId(), res.success(), res.reason());
+                                                                                                 ^
+    Symbol: Methode success()
+    Ort: Variable res von Typ PaymentResult
+  2 Fehler
+
+* Try:
+> Check your code and dependencies to fix the compilation error(s)
+> Run with --scan to generate a Build Scan (Powered by Develocity).
+==============================================================================
+
+BUILD FAILED in 5s
+4 actionable tasks: 2 executed, 2 up-to-date
+Configuration cache entry discarded with 1 problem.

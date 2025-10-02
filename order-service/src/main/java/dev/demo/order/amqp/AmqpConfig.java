@@ -1,10 +1,12 @@
 package dev.demo.order.amqp;
 
 import org.springframework.amqp.core.TopicExchange;
+import org.springframework.amqp.rabbit.AsyncRabbitTemplate;
 import org.springframework.amqp.rabbit.connection.CachingConnectionFactory;
 import org.springframework.amqp.rabbit.connection.CachingConnectionFactory.ConfirmType;
 import org.springframework.amqp.rabbit.core.RabbitAdmin;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.amqp.rabbit.listener.DirectReplyToMessageListenerContainer;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -51,15 +53,13 @@ public class AmqpConfig {
 
   // RPC (Direct-Reply-To) support
   @Bean
-  public org.springframework.amqp.rabbit.listener.DirectReplyToMessageListenerContainer directReplyToContainer(CachingConnectionFactory cf) {
-    var c = new org.springframework.amqp.rabbit.listener.DirectReplyToMessageListenerContainer(cf);
-    c.setMessageConverter(messageConverter());
-    return c;
+  public DirectReplyToMessageListenerContainer directReplyToContainer(CachingConnectionFactory cf) {
+    return new DirectReplyToMessageListenerContainer(cf);
   }
 
   @Bean
-  public org.springframework.amqp.rabbit.AsyncRabbitTemplate asyncRabbitTemplate(RabbitTemplate tpl,
-      org.springframework.amqp.rabbit.listener.DirectReplyToMessageListenerContainer drt) {
-    return new org.springframework.amqp.rabbit.AsyncRabbitTemplate(tpl, drt);
+  public AsyncRabbitTemplate asyncRabbitTemplate(RabbitTemplate tpl,
+      DirectReplyToMessageListenerContainer drt) {
+    return new AsyncRabbitTemplate(tpl, drt);
   }
 }

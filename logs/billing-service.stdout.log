@@ -1,0 +1,34 @@
+Calculating task graph as no cached configuration is available for tasks: :billing-service:bootRun
+> Task :common-dto:processResources NO-SOURCE
+> Task :common-dto:compileJava UP-TO-DATE
+> Task :common-dto:classes UP-TO-DATE
+> Task :common-dto:jar UP-TO-DATE
+> Task :billing-service:processResources FAILED
+> Task :billing-service:compileJava
+
+1 problem was found storing the configuration cache.
+- Task `:billing-service:processResources` of type `org.gradle.language.jvm.tasks.ProcessResources`: invocation of 'project' references a Gradle script object from a Groovy closure at execution time, which is unsupported with the configuration cache.
+  See https://docs.gradle.org/9.1.0/userguide/configuration_cache_requirements.html#config_cache:requirements:gradle_model_types
+
+See the complete report at file:///Users/severinselmaier/Documents/GitHub/hulkomat/poc-rabbit-amqp/build/reports/configuration-cache/ekjv8jf4cgn9zlvm7hwimn4w6/aeabbu15qypze10ei6rd4ofxg/configuration-cache-report.html
+
+[Incubating] Problems report is available at: file:///Users/severinselmaier/Documents/GitHub/hulkomat/poc-rabbit-amqp/build/reports/problems/problems-report.html
+
+FAILURE: Build failed with an exception.
+
+* Where:
+Build file '/Users/severinselmaier/Documents/GitHub/hulkomat/poc-rabbit-amqp/billing-service/build.gradle' line: 17
+
+* What went wrong:
+Execution failed for task ':billing-service:processResources'.
+> Invocation of 'project' references a Gradle script object from a Groovy closure at execution time, which is unsupported with the configuration cache.
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to generate a Build Scan (Powered by Develocity).
+> Get more help at https://help.gradle.org.
+
+BUILD FAILED in 943ms
+4 actionable tasks: 2 executed, 2 up-to-date
+Configuration cache entry discarded with 1 problem.
